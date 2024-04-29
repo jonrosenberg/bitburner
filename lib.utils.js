@@ -4,7 +4,6 @@
  */
 /** @param {NS} ns */
 export function dpList(ns, current="home", set=new Set()) {
-  fsd
 	let connections = ns.scan(current)
 	let next = connections.filter(c => !set.has(c))
 	next.forEach(n => {
