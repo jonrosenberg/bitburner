@@ -24,7 +24,7 @@ async function doPurchase(ns, player, purchased, desired_power) {
 	if (canAffordServer(player, desired_power)) {
 		ns.tprint("Buying server cluster-", highest_number_server, " of power ", desired_power);
 		let s = ns.purchaseServer('cluster-' + highest_number_server, powerToRam(desired_power));
-		await ns.scp(["bin.hk.js", "bin.wk.js", "bin.gr.js"], "home", s)
+		ns.scp(["bin.hk.js", "bin.wk.js", "bin.gr.js"], s, "home")
 		return s
 	}
 	return null;
