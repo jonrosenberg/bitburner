@@ -12,7 +12,7 @@ export async function main(ns) {
     ns.run("sbin.market.js");
   }
 
-  if (status < 10) {
+  if (ns.getServerMoneyAvailable("home") < Math.pow(10,12)) {
     ns.tprint("run hnet.js");
     ns.run("hnet.js");
   } else {
@@ -34,6 +34,5 @@ export async function main(ns) {
   } catch {}
   ns.tprint("run go.js");
   ns.run("go.js");
-
 
 }
