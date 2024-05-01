@@ -1,4 +1,5 @@
 Found some scripts here:
+* [faangbait@git](https://github.com/faangbait/lets-play-bitburner) [theblackhat5473@youtube](https://www.youtube.com/@theblackhat5473)
 * https://github.com/xxxsinx/bitburner
 * https://github.com/kuehnert/mrk-bitburner-scripts
 * https://github.com/chrisrabe/bitburner-automation
