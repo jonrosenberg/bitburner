@@ -9,7 +9,7 @@ export async function main(ns) {
     let servers = dpList(ns).map(s => new HWGWBaseServer(ns, s))
     
     let available_ram = new Map();
-    
+    ns.tail();
     while(true) {
       for (let server of servers) {
         // if (!server.admin && server.ports.required <= player.ports) {
