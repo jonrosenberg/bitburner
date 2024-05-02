@@ -15,7 +15,7 @@ function execHackingScript(ns, servers) {
 		try { hacking_script = hacking_scripts[0]; } catch {}
 	}
 	let command = ns.peek(1);
-	if (command == "NULL PORT DATA") { command = "sbin.hack.roundrobin.js" }
+	if (command == "NULL PORT DATA") { command = "sbin.hack.hwgw.js" }
 	
 	if (hacking_script) {
 		if (hacking_script.filename !== command) {

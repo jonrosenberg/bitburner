@@ -1,7 +1,7 @@
 import {
     log, disableLogs, instanceCount, getConfiguration, getNsDataThroughFile, getActiveSourceFiles,
     getStocksValue, formatNumberShort, formatMoney, formatRam
-} from '/g-ab/helpers.js'
+} from 'g-ab//g-ab/helpers.js'
 
 const argsSchema = [
     ['show-peoplekilled', false],

@@ -7,7 +7,7 @@ const argsSchema = [
     ['branch', 'main'],
     ['download', []], // By default, all supported files in the repository will be downloaded. Override with just a subset of files here
     ['new-file', []], // If a repository listing fails, only files returned by ns.ls() will be downloaded. You can add additional files to seek out here.
-    ['subfolder', ''], // Can be set to download to a sub-folder that is not part of the remote repository structure
+    ['subfolder', 'gitpull'], // Can be set to download to a sub-folder that is not part of the remote repository structure
     ['extension', ['.js', '.ns', '.txt', '.script']], // Files to download by extension
     ['omit-folder', ['Temp/']], // Folders to omit when getting a list of files to update (TODO: This may be obsolete now that we get a list of files from github itself.)
 ];
@@ -33,11 +33,22 @@ export async function main(ns) {
         ns.getScriptName().substring(0, ns.getScriptName().lastIndexOf('/')); // Default to the current folder
     const baseUrl = `raw.githubusercontent.com/${options.github}/${options.repository}/${options.branch}/`;
     const filesToDownload = options['new-file'].concat(options.download.length > 0 ? options.download : await repositoryListing(ns));
+    ns.tprint (filesToDownload.length);
+    let i = 0
+    for (const localFilePath of filesToDownload) {
+      ++i;
+      ns.tprint(`${i}: ${localFilePath}`);
+    }
+    i = 0
     for (const localFilePath of filesToDownload) {
         let fullLocalFilePath = pathJoin(options.subfolder, localFilePath);
+        ++i;
+
         const remoteFilePath = `https://` + pathJoin(baseUrl, localFilePath);
-        ns.print(`Trying to update "${fullLocalFilePath}" from ${remoteFilePath} ...`);
-        if (await ns.wget(`${remoteFilePath}?ts=${new Date().getTime()}`, fullLocalFilePath) && rewriteFileForSubfolder(ns, fullLocalFilePath))
+        ns.tprint(`${i} Trying to update "${fullLocalFilePath}" from ${remoteFilePath} ...`);
+        let wget_r = await ns.wget(`${remoteFilePath}?ts=${new Date().getTime()}`, fullLocalFilePath) && rewriteFileForSubfolder(ns, fullLocalFilePath);
+        ns.tprint(wget_r)
+        if (wget_r)
             ns.tprint(`SUCCESS: Updated "${fullLocalFilePath}" to the latest from ${remoteFilePath}`);
         else
             ns.tprint(`WARNING: "${fullLocalFilePath}" was not updated. (Currently running, or not located at ${remoteFilePath}?)`)

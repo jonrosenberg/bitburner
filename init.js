@@ -26,7 +26,7 @@ export async function main(ns) {
       ns.tprint("run maxcash.js");
       pid = ns.run("maxcash.js");
     }
-    ns.sleep(10);
+    await ns.sleep(10);
   } 
 
   try {
