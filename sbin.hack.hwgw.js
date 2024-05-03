@@ -11,6 +11,8 @@ export async function main(ns) {
     let available_ram = new Map();
     ns.tail();
     while(true) {
+      
+      
       for (let server of servers) {
         // if (!server.admin && server.ports.required <= player.ports) {
         if (!server.admin) {
@@ -20,6 +22,8 @@ export async function main(ns) {
       }
       let targets = servers.filter(s => s.isTarget);
       let attackers = servers.filter(s => s.isAttacker);
+      ns.print(`targets ${targets.length}`)
+      ns.print(`attackers ${attackers.length}`)
       attackers.forEach(a => available_ram.set(a.id, a.ram.free))
   
       // sort stage
@@ -29,7 +33,6 @@ export async function main(ns) {
       // prep stage
       let ready_targets = targets.filter(t => t.money.max == t.money.available && t.security.level == t.security.min)
       let unready_targets = targets.filter(t => t.money.max != t.money.available || t.security.level != t.security.min)
-
       // ensure the minimum required ready targets
       let required_ready_targets = targets.reduce(function(acc, target) {
         let batch_ram = target.perfect_batch.hk * 1.75 + target.perfect_batch.gr * 1.8 + target.perfect_batch.wk1 * 1.8 + target.perfect_batch.wk2 * 1.8;
@@ -44,8 +47,8 @@ export async function main(ns) {
       },[attackers.reduce((a,b) => a + b.ram.max, 0)]).length
 
       // let required_ready_targets = 11;
-  
-      if (ready_targets.length >= required_ready_targets) {
+      ns.print(`ready_targets.length >= required_ready_targets: ${ready_targets.length} >= ${required_ready_targets}`)
+      if (ready_targets.length >= required_ready_targets/10) {
         // hwgw stage
         for (let target of ready_targets) {
           let proposed_batch = calculate_hwgw_batch(ns, target);
@@ -67,7 +70,6 @@ export async function main(ns) {
           }
           await ns.sleep(160);
         }
-
         if (prepTimes.length > 0) {
           prepTimes.sort((a,b) => b-a)
           let maxPrepTime = prepTimes[0]
@@ -75,7 +77,7 @@ export async function main(ns) {
           prepTimes.sort((a,b) => a-b)
           let minPrepTime = prepTimes[0]
           ns.print("minPrepTime: "+minPrepTime)
-          let prepTime = (maxPrepTime + (minPrepTime*9))/10
+          let prepTime = (maxPrepTime + (minPrepTime*99))/100
           await ns.sleep(prepTime)
         }
       }
@@ -252,7 +254,7 @@ function run_hwgw_batch(ns, attackers, target, batch, available_ram) {
     const hkSanityCheck = (hkScheduled.reduce((a,b) => a + b.threads, 0) == hackThreads)
     const grSanityCheck = (grScheduled.reduce((a,b) => a + b.threads, 0) == growThreads)
     ns.print(wkScheduled.reduce((a,b) => b.attacker, 0))
-    ns.print("wkSanityCheck: "+wkSanityCheck+" count: "+wkScheduled.reduce((a,b) => a + b.threads, 0)+"="+(weakThreads1 + weakThreads2)+" w1:"+weakThreads1+" + w2:"+weakThreads2);
+    ns.print("wkSanityCheck: "+wkSanityCheck+" count: "+wkScheduled.reduce((a,b) => a + b.threads, 0)+"="+(weakThreads1 + weakThreads2));
     ns.print("hkSanityCheck: "+hkSanityCheck+" count: "+hkScheduled.reduce((a,b) => a + b.threads, 0)+"="+hackThreads);
     ns.print("grSanityCheck: "+grSanityCheck+" count: "+grScheduled.reduce((a,b) => a + b.threads, 0)+"="+growThreads);
     // make sure our batch matches the threads requested initially

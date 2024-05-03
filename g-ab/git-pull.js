@@ -7,9 +7,10 @@ const argsSchema = [
     ['branch', 'main'],
     ['download', []], // By default, all supported files in the repository will be downloaded. Override with just a subset of files here
     ['new-file', []], // If a repository listing fails, only files returned by ns.ls() will be downloaded. You can add additional files to seek out here.
-    ['subfolder', 'gitpull'], // Can be set to download to a sub-folder that is not part of the remote repository structure
-    ['extension', ['.js', '.ns', '.txt', '.script']], // Files to download by extension
+    ['subfolder', ''], // Can be set to download to a sub-folder that is not part of the remote repository structure
+    ['exts', ['.js', '.ns', '.txt', '.script']], // Files to download by exts
     ['omit-folder', ['Temp/']], // Folders to omit when getting a list of files to update (TODO: This may be obsolete now that we get a list of files from github itself.)
+    ['help', false], // print details about the script
 ];
 
 export function autocomplete(data, args) {
@@ -27,6 +28,11 @@ export function autocomplete(data, args) {
  * - Ensuring you have no local changes that you don't mind getting overwritten **/
 export async function main(ns) {
     options = ns.flags(argsSchema);
+    if (options.help) {
+      printHelp(ns);
+      ns.exit()
+    }
+    
     // Once upon a time, the game API required folders to have a leading slash
     // As of 2.3.1, not only is this no longer needed, but it can break the game.
     options.subfolder = options.subfolder ? trimSlash(options.subfolder) : // Remove leading slash from any user-specified folder
@@ -102,7 +108,7 @@ async function repositoryListing(ns, folder = '') {
         // Sadly, we must recursively retrieve folders, which eats into our 60 free API requests per day.
         const folders = response.filter(f => f.type == "dir").map(f => f.path);
         let files = response.filter(f => f.type == "file").map(f => f.path)
-            .filter(f => options.extension.some(ext => f.endsWith(ext)));
+            .filter(f => options.exts.some(ext => f.endsWith(ext)));
         ns.print(`The following files exist at ${listUrl}\n${files.join(", ")}`);
         for (const folder of folders)
             files = files.concat((await repositoryListing(ns, folder))
@@ -113,7 +119,25 @@ async function repositoryListing(ns, folder = '') {
         ns.tprint(`WARNING: Failed to get a repository listing (GitHub API request limit of 60 reached?): ${listUrl}` +
             `\nResponse Contents (if available): ${JSON.stringify(response ?? '(N/A)')}\nError: ${String(error)}`);
         // Fallback, assume the user already has a copy of all files in the repo, and use it as a directory listing
-        return ns.ls('home').filter(name => options.extension.some(ext => f.endsWith(ext)) &&
+        return ns.ls('home').filter(name => options.exts.some(ext => f.endsWith(ext)) &&
             !options['omit-folder'].some(dir => name.startsWith(dir)));
     }
+}
+
+function printHelp(ns) {
+  ns.tprint(options);
+  ns.tprint(`INFO
+${argsSchema[0][0]}\t\t= '${argsSchema[0][1]}'- github user 
+${argsSchema[1][0]}\t= '${argsSchema[1][1]}'\t- github repository
+${argsSchema[2][0]}\t\t= '${argsSchema[2][1]}'\t- github branch 
+${argsSchema[3][0]}\t= [${argsSchema[3][1]}]\t\t- By default, all supported files in the repository will be downloaded. Override with just a subset of files here
+${argsSchema[4][0]}\t= [${argsSchema[4][1]}]\t\t- If a repository listing fails, only files returned by ns.ls() will be downloaded. You can add additional files to seek out here.
+${argsSchema[5][0]}\t= '${argsSchema[5][1]}'\t\t- Can be set to download to a sub-folder that is not part of the remote repository structure
+${argsSchema[6][0]} = [${argsSchema[6][1]}]\t- Files to download by extensions
+${argsSchema[7][0]}\t= [${argsSchema[7][1]}]\t- Folders to omit when getting a list of files to update (TODO: This may be obsolete now that we get a list of files from github itself.)
+${argsSchema[8][0]}\t\t= ${argsSchema[8][1]}\t\t- print details about the script
+  `);
+  
+
+      
 }

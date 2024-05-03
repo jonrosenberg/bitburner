@@ -23,8 +23,20 @@ export const stockExtenderShort = (ns, stockObject) => {
         return (shares * stockObject.price.bear) + 100000 
     }
 
-    stockObject.unshort = function (shares=stockObject.position.bear) {
-        return ns.stock.sellShort(stockObject.ticker, shares);
+    stockObject.unsell = function (shares=stockObject.position.bear) {
+        let pos = this.position;
+        let fee = pos.bear == 0 ? 0 : this.commision
+        let unsellPrice = this.ns.stock.sellShort(this.ticker, shares);
+        let unsellReturned = (unsellPrice * pos.bear) - fee
+        return {
+          shares: pos.bear,
+          sellPrice: pos.bearPrice,
+          sellSpent: pos.bearSpent,
+          price: unsellPrice,
+          returned: unsellReturned,
+          net: unsellReturned - pos.bearSpent
+        }
+        // return ns.stock.sellShort(stockObject.ticker, shares);
     }
 
     stockObject.absoluteForecast = function () {

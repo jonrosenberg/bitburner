@@ -38,6 +38,8 @@ export async function main(ns) {
     
 	
   let stocks = [];
+  let totalNet = 0;
+  let numExits = 0;
   
   for (let s of stock_list) {
     stocks.push(new BaseStock(ns, s))
@@ -96,16 +98,28 @@ export async function main(ns) {
       }
       for (let st of stocks) {
         try {
-          if (st.forecast < .534) { st.unbuy() }
-          if (st.forecast > .466) { st.unsell()}
+          if (st.forecast < .534) { 
+            let unbuyRes = st.unbuy();
+            totalNet += unbuyRes.net;
+            if (unbuyRes.price != 0) { ++numExits;}
+          }
+          if (st.forecast > .466) { 
+            let unsellRes = st.unsell();
+            totalNet += unsellRes.net;
+            if (unsellRes.price != 0) { ++numExits;}
+          }
         } catch {}
       }
 
       for (let st of stocks) {
         try {
           // if (st.forecast > .560) { st.max_long(); }
-          if (st.forecast > .535) { st.max_long(); }
-          if (st.forecast < .465) { st.max_short(); }
+          if (st.forecast > .535) { 
+            st.max_long();
+          }
+          if (st.forecast < .465) { 
+            st.max_short();
+          }
         } catch {}
       }
     }
@@ -143,6 +157,8 @@ export async function main(ns) {
     ns.print("total spent: "+ns.formatNumber(totalSpent));
     ns.print("total gains: "+ns.formatNumber(totalProfit-totalSpent));
     ns.print("total profit: "+ns.formatPercent(totalProfit/totalSpent-1));
+    ns.print("total net: "+ns.formatNumber(totalNet));
+    ns.print(`total # exits: ${numExits}`);
     await ns.sleep(6000);
 	}
 

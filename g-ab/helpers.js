@@ -249,7 +249,7 @@ export async function runCommand_Custom(ns, fnRun, command, fileName, args = [],
     if (!verbose) disableLogs(ns, ['sleep']);
     // Auto-import any helpers that the temp script attempts to use
     const required = getExports(ns).filter(e => command.includes(`${e}(`));
-    let script = (required.length > 0 ? `import { ${required.join(", ")} } from 'g-ab/helpers.js''\n` : '') +
+    let script = (required.length > 0 ? `import { ${required.join(", ")} } from 'helpers.js'\n` : '') +
         `export async function main(ns) { ${command} }`;
     fileName = fileName || getDefaultCommandFileName(command, '.js');
     if (verbose)

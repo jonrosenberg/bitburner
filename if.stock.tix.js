@@ -78,7 +78,18 @@ export default class TIXStock extends BaseStock {
 	longCost(shares) { return (shares * this.price.bull) + 100000 }
 	
 	unbuy(shares=this.position.bull) {
-    return this.ns.stock.sellStock(this.ticker, shares);
+    let pos = this.position;
+    let fee = pos.bull == 0 ? 0 : this.commision
+    let unbuyPrice = this.ns.stock.sellStock(this.ticker, shares);
+    let unbuyReturned = (unbuyPrice * pos.bull) - fee
+    return {
+      shares: pos.bull,
+      buyPrice: pos.bullPrice,
+      buySpent: pos.bullSpent,
+      price: unbuyPrice,
+      returned: unbuyReturned,
+      net: unbuyReturned - pos.bullSpent
+    }
 		// return this.ns.stock.sell(this.ticker, shares);
 	}
 
