@@ -26,4 +26,4 @@ export default class FourSigmaTIXStock extends TIXStock {
 
 		} while (repeat)
 	}
-}\
+}
