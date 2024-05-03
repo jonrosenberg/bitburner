@@ -10,6 +10,8 @@ export async function main(ns) {
 
   const options = ns.flags(argsSchema)
   const subs = ns.args[0] ? ns.args[0] : 'Temp'
+  // Remove cache from previous run
+  options.rm = options.rm.filter(value => ns.args.includes(value));
   options.rm.push(subs)
   if (options.h || options.help) {
     ns.tprint(options);

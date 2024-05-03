@@ -11,6 +11,7 @@ const argsSchema = [
     ['exts', ['.js', '.ns', '.txt', '.script']], // Files to download by exts
     ['omit-folder', ['Temp/']], // Folders to omit when getting a list of files to update (TODO: This may be obsolete now that we get a list of files from github itself.)
     ['help', false], // print details about the script
+    ['h', false], // print details about the script
 ];
 
 export function autocomplete(data, args) {
@@ -28,7 +29,7 @@ export function autocomplete(data, args) {
  * - Ensuring you have no local changes that you don't mind getting overwritten **/
 export async function main(ns) {
     options = ns.flags(argsSchema);
-    if (options.help) {
+    if (options.help || options.h) {
       printHelp(ns);
       ns.exit()
     }
@@ -36,7 +37,7 @@ export async function main(ns) {
     // Once upon a time, the game API required folders to have a leading slash
     // As of 2.3.1, not only is this no longer needed, but it can break the game.
     options.subfolder = options.subfolder ? trimSlash(options.subfolder) : // Remove leading slash from any user-specified folder
-        ns.getScriptName().substring(0, ns.getScriptName().lastIndexOf('/')); // Default to the current folder
+        ns.getScriptName().substring(0, ns.getScriptName().lastIndexOf('~/')); // Default to the current folder
     const baseUrl = `raw.githubusercontent.com/${options.github}/${options.repository}/${options.branch}/`;
     const filesToDownload = options['new-file'].concat(options.download.length > 0 ? options.download : await repositoryListing(ns));
     ns.tprint (filesToDownload.length);
