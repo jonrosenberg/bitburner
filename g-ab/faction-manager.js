@@ -61,6 +61,7 @@ const argsSchema = [ // The set of all command line arguments
     ['hide-stat', []], // Stats to exclude from the final table (partial matching works)
     ['unique', false], // When displaying cumulative stats by faction, only include augs not given by a faction further up the list
     ['u', false], // Flag alias for --unique
+    ['h', false], // print options
 ];
 
 // For convenience, these lists provide command-line <tab> auto-complete values
@@ -95,7 +96,10 @@ export async function main(ns) {
     if (!runOptions || await instanceCount(ns) > 1) return; // Prevent multiple instances of this script from being started, even with different args.
     options = runOptions; // We don't set the global "options" until we're sure this is the only running instance
     _ns = ns;
-
+    if(options.h) {
+      ns.tprint(options);
+      ns.exit();
+    }
     // Ensure all globals are reset before we proceed with the script, in case we've done things out of order
     augCountMult = favorToDonate = playerData = gangFaction = startingPlayerMoney = stockValue = null;
     factionNames = [], joinedFactions = [], desiredStatsFilters = [], purchaseFactionDonations = [];
