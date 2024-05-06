@@ -1,0 +1,84 @@
+function allServers(sQueue){
+  if (!sQueue){ sQueue = "home"; }
+  allServers = [];
+  server = '';
+  while(sQueue.length > 0){
+    server = sQueue.pop();
+    allServers.push(server);
+    scan(server).forEach(elem => {if (!sQueue.includes(elem) && !allServers.includes(elem)) {
+      sQueue.push(elem);
+    }});
+  }
+  return allServers;
+}
+
+/** @param {NS} ns */
+function threadCount(hostname, scriptRam) {
+  let threads = 0;
+  let free_ram = getServerMaxRam(hostname) - getServerUsedRam(hostname);
+  threads = free_ram / scriptRam;
+  return Math.floor(threads);
+}
+
+
+
+
+/** @param {NS} ns */
+// function main(ns) {
+  servers = allServers();
+  
+  for (var server of servers) {
+    scp(["bin.wk.js","bin.gr.js","bin.hk.js"], server);
+    // open all possible ports
+    if (!hasRootAccess(server)) {     
+        brutessh(server);
+        ftpcrack(server);
+        relaysmtp(server);
+        httpworm(server);
+        sqlinject(server);
+        nuke(server);
+    }
+  }
+
+  while(true){
+    let targets = [];
+    for (let server of servers) {
+        if(getServerMoneyAvailable(server) > 5000 && server != "home"){
+            targets.push(server)
+        }
+    }
+    for (let server of servers) {
+      for (let target of targets) {
+        if(/*server != "home" && */hasRootAccess(server) && hasRootAccess(target) && getServerMaxMoney(target) > 5000){
+          if (getServerSecurityLevel(target) > getServerMinSecurityLevel(target) + 3) {
+            print("weak");
+            let available_threads = threadCount(server, 1.75);
+            print(available_threads);
+            if (available_threads > 0) {
+              exec("bin.wk.js", server, available_threads, target);
+            }
+          } else if (getServerMoneyAvailable(target) < getServerMaxMoney(target)) {
+            print("grow");
+            let available_threads = threadCount(server, 1.75);
+            print(available_threads)
+            if (available_threads > 0) {
+              
+              exec("bin.gr.js", server, available_threads, target);
+            }
+          } else {
+            print("hack");
+            let available_threads = threadCount(server, 1.7);
+            print(available_threads)
+            if (available_threads > 0) {
+              exec("bin.hk.js", server, available_threads, target);
+            }
+          }
+        }
+      }
+      sleep(10);
+    }
+
+  print(servers.length)
+  
+  
+}
