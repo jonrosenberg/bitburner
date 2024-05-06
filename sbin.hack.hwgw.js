@@ -3,6 +3,7 @@ import HackableBaseServer from "./if.server.hackable"
 
 import { numCycleForGrowthCorrected } from "./if.server.hwgw"
 import { dpList } from "./lib.utils";
+import { hwgw_amp } from "./var.constants";
 /** @param {NS} ns **/
 export async function main(ns) {
     // gather servers stage
@@ -48,7 +49,7 @@ export async function main(ns) {
 
       // let required_ready_targets = 11;
       ns.print(`ready_targets.length >= required_ready_targets: ${ready_targets.length} >= ${required_ready_targets}`)
-      if (ready_targets.length >= required_ready_targets/10) {
+      if (ready_targets.length >= required_ready_targets*hwgw_amp.targets) {
         // hwgw stage
         for (let target of ready_targets) {
           let proposed_batch = calculate_hwgw_batch(ns, target);
@@ -71,13 +72,15 @@ export async function main(ns) {
           await ns.sleep(160);
         }
         if (prepTimes.length > 0) {
-          prepTimes.sort((a,b) => b-a)
-          let maxPrepTime = prepTimes[0]
-          ns.print("maxPrepTime: "+maxPrepTime)
-          prepTimes.sort((a,b) => a-b)
-          let minPrepTime = prepTimes[0]
-          ns.print("minPrepTime: "+minPrepTime)
-          let prepTime = (maxPrepTime + (minPrepTime*99))/100
+          prepTimes.sort((a,b) => b-a);
+          let maxPrepTime = prepTimes[0];
+          ns.print("maxPrepTime: "+maxPrepTime);
+          prepTimes.sort((a,b) => a-b);
+          let minPrepTime = prepTimes[0];
+          ns.print("minPrepTime: "+minPrepTime);
+          let prepTime = (maxPrepTime + (minPrepTime*(hwgw_amp.time-1)))/hwgw_amp.time;
+          const rounds = Math.floor(prepTime/(10020));
+          if(rounds > 0) { ns.run("sbin.repShareBoost.js",1, "--rounds", Math.floor(prepTime/(10020)))}
           await ns.sleep(prepTime)
         }
       }
