@@ -20,6 +20,7 @@ export default class TIXStock extends BaseStock {
   get commision() { return this.ns.stock.getConstants().StockMarketCommission }
 
 	get position() { 
+    if (!this.ticker) {return null}
 		let pos = this.ns.stock.getPosition(this.ticker);
     let fee = pos[0] == 0 ? 0 : this.commision
     

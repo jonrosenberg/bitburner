@@ -78,33 +78,9 @@ export async function main(ns) {
       }
       ns.go.resetBoardState(opponentsNames[opponent],boardSize[options.s])
     }
-    // Keep looping as long as the opponent is playing moves
     
   }
 
-  // TODO: add a loop to keep playing
-  // ns.go.resetBoardState()
-  // TODO: reset board, e.g. `ns.go.resetBoardState("Netburners", 7)`
+
 }
 
-
-
-
-// /** @param {NS} ns */
-// export async function main(ns) {
-//   ns.tail();
-//   const validMoves = ns.go.analysis.getValidMoves();
-//   ns.print("validMoves");
-//   ns.print(validMoves);
-//   ns.print("ns.go.getBoardState()");
-//   ns.print(ns.go.getBoardState());
-//   let randMove = getRandomMove(ns.go.getBoardState(), ns.go.analysis.getValidMoves());
-//   ns.print("randMove");
-//   ns.print(randMove);
-//   if (randMove.length == 0) {
-//     await ns.go.passTurn();
-//   }
-//   // if (validMoves[x][y] === true) {
-//   //   ns.print(validMoves);
-//   // }
-// }

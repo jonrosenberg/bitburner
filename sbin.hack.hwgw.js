@@ -3,9 +3,19 @@ import HackableBaseServer from "./if.server.hackable"
 
 import { numCycleForGrowthCorrected } from "./if.server.hwgw"
 import { dpList } from "./lib.utils";
-import { hwgw_amp } from "./var.constants";
+import { hwgw_amp, fmt, ansi } from "./var.constants";
+
+const argsSchema = [
+  ['sanity', false],
+  ['share', false],
+  ['noPrep', false],
+];
+let options;
+
 /** @param {NS} ns **/
 export async function main(ns) {
+    options = ns.flags(argsSchema);
+    ns.disableLog("getHackingLevel");
     // gather servers stage
     let servers = dpList(ns).map(s => new HWGWBaseServer(ns, s))
     
@@ -20,7 +30,7 @@ export async function main(ns) {
           server.sudo();
           ns.scp(["bin.wk.js", "bin.hk.js", "bin.gr.js"], server.id, "home")
         }
-      }
+      }     
       let targets = servers.filter(s => s.isTarget);
       let attackers = servers.filter(s => s.isAttacker);
       ns.print(`targets ${targets.length}`)
@@ -37,7 +47,7 @@ export async function main(ns) {
       // ensure the minimum required ready targets
       let required_ready_targets = targets.reduce(function(acc, target) {
         let batch_ram = target.perfect_batch.hk * 1.75 + target.perfect_batch.gr * 1.8 + target.perfect_batch.wk1 * 1.8 + target.perfect_batch.wk2 * 1.8;
-        let simultaneous_batches = (ns.getHackTime(target.id) * 4) / 160;
+        let simultaneous_batches = (ns.getHackTime(target.id) * hwgw_amp.num_simultaneous_batches) / 160;
         let ram_required = batch_ram * simultaneous_batches;
 
         if (ram_required <= acc[acc.length-1]) {
@@ -71,16 +81,18 @@ export async function main(ns) {
           }
           await ns.sleep(160);
         }
-        if (prepTimes.length > 0) {
+        ns.print(`!options.noPrep: ${!options.noPrep} prepTimes: ${prepTimes.length}`)
+        await ns.sleep(1000)
+        if (prepTimes.length > 0 && !options.noPrep) {
           prepTimes.sort((a,b) => b-a);
           let maxPrepTime = prepTimes[0];
-          ns.print("maxPrepTime: "+maxPrepTime);
+          ns.print(ansi([fmt.bgBlue])+"maxPrepTime: "+maxPrepTime);
           prepTimes.sort((a,b) => a-b);
           let minPrepTime = prepTimes[0];
-          ns.print("minPrepTime: "+minPrepTime);
+          ns.print(ansi([fmt.bgBlue])+"minPrepTime: "+minPrepTime);
           let prepTime = (maxPrepTime + (minPrepTime*(hwgw_amp.time-1)))/hwgw_amp.time;
           const rounds = Math.floor(prepTime/(10020));
-          if(rounds > 0) { ns.run("sbin.repShareBoost.js",1, "--rounds", Math.floor(prepTime/(10020)))}
+          if(rounds > 0 && options.share) { ns.run("sbin.repShareBoost.js",1, "--rounds", Math.floor(prepTime/(10020)))}
           await ns.sleep(prepTime)
         }
       }
@@ -170,10 +182,10 @@ function calculate_hwgw_batch(ns, target, prep_batch=false) {
 /** @param {NS} ns **/
 function run_hwgw_batch(ns, attackers, target, batch, available_ram) {
     let nextBatch = [];
-    const hackThreads = batch.threads.hk;
-    const growThreads = batch.threads.gr;
-    const weakThreads1 = Math.floor(batch.threads.wk1);
-    const weakThreads2 = batch.threads.wk2;
+    const hackThreads = batch.threads.hk >= 0 ? batch.threads.hk : 0;
+    const growThreads = batch.threads.gr >= 0 ? batch.threads.gr : 0;
+    const weakThreads1 = Math.floor(batch.threads.wk1) >= 0 ? Math.floor(batch.threads.wk1) : 0;
+    const weakThreads2 = batch.threads.wk2 >= 0 ? batch.threads.wk2 : 0;
     let ram_map = new Map(available_ram); // clone the map so we don't modify it if we fail sanity checks
   
     attackers.forEach(function(a) {
@@ -256,14 +268,10 @@ function run_hwgw_batch(ns, attackers, target, batch, available_ram) {
     const wkSanityCheck = (wkScheduled.reduce((a,b) => a + b.threads, 0) == (weakThreads1 + weakThreads2))
     const hkSanityCheck = (hkScheduled.reduce((a,b) => a + b.threads, 0) == hackThreads)
     const grSanityCheck = (grScheduled.reduce((a,b) => a + b.threads, 0) == growThreads)
-    ns.print(wkScheduled.reduce((a,b) => b.attacker, 0))
-    ns.print("wkSanityCheck: "+wkSanityCheck+" count: "+wkScheduled.reduce((a,b) => a + b.threads, 0)+"="+(weakThreads1 + weakThreads2));
-    ns.print("hkSanityCheck: "+hkSanityCheck+" count: "+hkScheduled.reduce((a,b) => a + b.threads, 0)+"="+hackThreads);
-    ns.print("grSanityCheck: "+grSanityCheck+" count: "+grScheduled.reduce((a,b) => a + b.threads, 0)+"="+growThreads);
+    ns.print(`${!options.sanity && (!wkSanityCheck || !hkSanityCheck || !grSanityCheck) ? ansi([fmt.Red]) : ansi()}Sanity wk: ${wkScheduled.reduce((a,b) => a + b.threads, 0)}=${(weakThreads1 + weakThreads2)} hk: ${hkScheduled.reduce((a,b) => a + b.threads, 0)}=${hackThreads} gr: ${grScheduled.reduce((a,b) => a + b.threads, 0)}=${growThreads}`);
     // make sure our batch matches the threads requested initially
     // exec and return modified ram
-    if (wkSanityCheck && hkSanityCheck && grSanityCheck) {
-    // if (wkSanityCheck && hkSanityCheck) {
+    if (options.sanity || (wkSanityCheck && hkSanityCheck && grSanityCheck) ) {
         for (let cmd of nextBatch) {
             ns.exec(cmd.filename, cmd.attacker, cmd.threads, target.id, false, cmd.landing)
         }

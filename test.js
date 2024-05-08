@@ -1,4 +1,4 @@
-import { reservedHomeRam } from "./var.constants";
+import { fmt, ansi } from "./var.constants";
 import { dpList } from "./lib.utils";
 import HackableBaseServer from "./if.server.hackable"
 
@@ -7,8 +7,10 @@ import HackableBaseServer from "./if.server.hackable"
 /** @param {NS} ns */
 export async function main(ns) {
   ns.tail()
-
-  ns.print("servers:");
+  
+  //ns.print("servers: \u001b[1;40;4;32m; bye \u001b[31m hi red \u001b[0m back to normal");
+  ns.print(`${ansi([fmt.Bold,fmt.Underline,fmt.Cyan,fmt.bgTurquoise])}ANSI function${ansi()} back to nromal`)
+  ns.exit();
   let slist = dpList(ns);
   let servers = [];
   const index = slist.indexOf("home");

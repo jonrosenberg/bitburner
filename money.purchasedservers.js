@@ -1,13 +1,22 @@
 import BasePlayer from "if.player";
 import BaseServer from "if.server";
 import { dpList } from "lib.utils";
-/** @param {NS} ns **/
 
+const maxNumServers = 25;
+const maxServerPower = 20;
+const cost_per_ram = 55000;
+let minimumServerPower = 20;
+  
+const argsSchema = [
+  ['all',false],
+  ['num',-1],
+];
+
+/** @param {NS} ns **/
 const powerToRam = (power) => {
 	return Math.pow(2, power);
 }
 const canAffordServer = (player, desired_power) => {
-	let cost_per_ram = 55000;
 	return (player.money >= cost_per_ram * powerToRam(desired_power))
 }
 /** @param {NS} ns */
@@ -35,8 +44,8 @@ function sellServer(ns, weakestServer) {
 	return ns.deleteServer(weakestServer.id)
 }
 /** @param {NS} ns */
-export async function main(ns) {
-	let servers = [];
+async function doPurchaseServer(ns) {
+  let servers = [];
 	let slist = dpList(ns);
 	for (let s of slist) {
 		servers.push(new BaseServer(ns, s))
@@ -44,12 +53,9 @@ export async function main(ns) {
 
 	let player = new BasePlayer(ns, "player");
 
-	let minimumServerPower = 20;
-  while(minimumServerPower > 6 && !canAffordServer(player, minimumServerPower)) {
+	while(minimumServerPower > 6 && !canAffordServer(player, minimumServerPower)) {
     --minimumServerPower;
   }
-	const maxServerPower = 20;
-	const maxNumServers = 25;
 
 	let purchased = servers.filter(s => s.purchased);
 
@@ -87,4 +93,15 @@ export async function main(ns) {
 			}
 		}
 	}
+}
+
+/** @param {NS} ns */
+export async function main(ns) {
+  const options = ns.flags(argsSchema);
+  const totalNumServers = options.num > 0 ? options.num : maxNumServers;
+  let numServers = 0;
+  do {
+    doPurchaseServer(ns);
+    ++numServers;
+  } while (numServers < totalNumServers && options.all)
 }

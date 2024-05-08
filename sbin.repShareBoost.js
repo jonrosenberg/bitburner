@@ -5,6 +5,7 @@ import HackableBaseServer from "./if.server.hackable"
 const argsSchema = [
   ['rounds',-1],
   ['r',-1],
+  ['home',false],
 ];
 
 /** @param {NS} ns */
@@ -44,11 +45,13 @@ export async function main(ns) {
 	}
   let round = 0;
   ns.print(`# rounds ${totalRounds}`);
-  while(!hasRounds || round < totalRounds) {
+  while( !hasRounds || round < totalRounds ) {
     ++round;
     let [ pidNum,  numThreads, freeRam] = doShare(ns,"home");
-    for (let s of slist) {
-      numThreads += doShare(ns,s)[1];
+    if (!options.home) {
+      for (let s of slist) {
+        numThreads += doShare(ns,s)[1];
+      }
     }
     ns.print(`INFO\nAvialable Ram ${ns.formatNumber(freeRam)}
 Num of thread sh runs ${ns.formatNumber(numThreads)}`);

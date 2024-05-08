@@ -72,7 +72,7 @@ export async function main(ns) {
   while (!player.software.ssh) {
     if (!pid) {
       ns.tprint("run maxcash.js");
-      pid = ns.run("maxcash.js");
+      pid = ns.run("sbin.hack.maxcash.js");
     }
     await ns.sleep(10);
   } 

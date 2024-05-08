@@ -19,45 +19,62 @@ export async function main(ns) {
 	}
 
 	
-
-	let target = new HackableBaseServer(ns, "foodnstuff")
-
+  let targets = [];
+  targets.push(new HackableBaseServer(ns, "n00dles"));
+  targets.push(new HackableBaseServer(ns, "n00dles"));
+  targets.push(new HackableBaseServer(ns, "n00dles"));
+  targets.push(new HackableBaseServer(ns, "n00dles"));
+	targets.push(new HackableBaseServer(ns, "foodnstuff"));
+	targets.push(new HackableBaseServer(ns, "foodnstuff"));
+  targets.push(new HackableBaseServer(ns, "sigma-cosmetics"));
+  targets.push(new HackableBaseServer(ns, "joesguns"));
+  targets.push(new HackableBaseServer(ns, "nectar-net"));
+  targets.push(new HackableBaseServer(ns, "hong-fang-tea"));
+  targets.push(new HackableBaseServer(ns, "zer0"));
+  targets.push(new HackableBaseServer(ns, "max-hardware"));
+  targets.push(new HackableBaseServer(ns, "harakiri-sushi"));
+  targets.push(new HackableBaseServer(ns, "iron-gym"));
 	ns.disableLog("ALL");
 	for (let server of servers) {
-		await ns.scp(["bin.wk.js", "bin.hk.js", "bin.gr.js"], "home", server.id);
+		ns.scp(["bin.wk.js", "bin.hk.js", "bin.gr.js"], server.id, "home");
 	}
 
 	while(true) {
 		for (let server of servers) {
-			if (server.admin && target.admin) {
-				// divert all of this server's available threads to the most valuable command
-				if (target.security.level > target.security.min) {
-					let available_threads = server.threadCount(1.75)
-					// weaken the target while security > minsecurity
-					if (available_threads >= 1) {
-						ns.exec("bin.wk.js", server.id, available_threads, target.id)
-					}
-				} else if (target.money.available < target.money.max) {
-					let available_threads = server.threadCount(1.75)
+      for (let target of targets) {
+        if (server.admin && target.admin) {
+          // divert all of this server's available threads to the most valuable command
+          if (target.security.level > target.security.min) {
+            let available_threads = Math.ceil(server.threadCount(1.8)/targets.length)
+            // weaken the target while security > minsecurity
+            if (available_threads >= 1) {
+              // ns.print(`${server.id} server.wk: ${available_threads}`)
+              ns.exec("bin.wk.js", server.id, available_threads, target.id)
+            }
+          } else if (target.money.available < target.money.max) {
+            let available_threads = Math.ceil(server.threadCount(1.8)/targets.length)
 
-					// grow the target while money < maxmoney
-					if (available_threads >= 1) {
-						ns.exec("bin.gr.js", server.id, available_threads, target.id)
-					}
-				} else {
-					let available_threads = server.threadCount(1.7)
+            // grow the target while money < maxmoney
+            if (available_threads >= 1) {
+              // ns.print(`${server.id} server.gr: ${available_threads}`)
+              ns.exec("bin.gr.js", server.id, available_threads, target.id)
+            }
+          } else {
+            let available_threads = Math.ceil(server.threadCount(1.75)/targets.length)
 
-					// hack the target
-					if (available_threads >= 1) {
-						ns.exec("bin.hk.js", server.id, available_threads, target.id)
-					}
-				}
+            // hack the target
+            if (available_threads >= 1) {
+              // ns.print(`${server.id} server.hk: ${available_threads}`)
+              ns.exec("bin.hk.js", server.id, available_threads, target.id)
+            } 
+          }
 
-			} else {
-        server.sudo();  
-			}
+        } else {
+          server.sudo();  
+        }
 
-		await ns.sleep(10)
-		}
+      await ns.sleep(10)
+      }
+    }
 	}
 }
