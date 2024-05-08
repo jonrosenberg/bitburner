@@ -1,6 +1,6 @@
 /** @param {NS} ns */
 export const reservedHomeRam = 50;
-export const hack_percent = .1;
+export const hack_percent = 1;
 export const ServerBaseGrowthRate =  1.03;
 export const ServerMaxGrowthRate = 1.0035;
 export const BitNodeMultipliers = {
@@ -9,14 +9,53 @@ export const BitNodeMultipliers = {
 // hwgw
 export const hwgw_amp = {
   targets: 1,// required ready targets needed for batch
-  time: 1, // wait time divided by this number
+  time: 100, // wait time divided by this number
   num_simultaneous_batches: 4,
 };
+
+/**
+ * function info
+ */
+export const bin = {
+  hk:{
+    id: "bin.thk.js",
+    ram: 1.7,
+    runtimeMult: 1.0,
+  },
+  wk:{
+    id: "bin.twk.js",
+    ram: 1.75,
+    runtimeMult: 4.0,
+  },
+  gr:{
+    id: "bin.tgr.js",
+    ram: 1.75,
+    runtimeMult: 3.2,
+  },
+  sh:{
+    id: "bin.sh.js",
+    ram: 4,
+    runtime: 10000,
+  },
+}
+
+/**
+ * Convert miliseconds into time string format
+ * @param {number} miliseconds 
+ * @returns {string} format "101h 13m 00s 012ms" 
+ */
+export const msToTime = (s) => {
+  // Pad to 2 or 3 digits, default is 2
+  var pad = (n, z = 2) => ('00' + n).slice(-z);
+  const t = [s/3.6e6|0, (s%3.6e6)/6e4|0, (s%6e4)/1000|0, s%1000] 
+  return (t[0] >= 100 ? t[0] + 'h ' : t[0] ? pad(t[0]) + 'h ':'') + (t[1] ? pad(t[1]) + 'm ':'') + (t[2] ? t[2] + 's ':'') + (s%1000 != 0 ? pad(t[3], 3) + 'ms':'0ms');
+}
+
 
 /** 
 Here is the list of values you can use to replace {format}
 @param {number[]=} codes - (default: [0]) 
-@returns {string=}
+@returns {string}
 0: Normal
 1: Bold
 4: Underline
@@ -60,20 +99,12 @@ export const fmt = {
   Pink: 35,
   Cyan: 36,
   White: 37,
-  bgDarkBlue: 40,
-  bgOrange: 41,
-  bgBlue: 42,
-  bgTurquoise: 43,
-  bgGray: 44,
-  bgIndigo: 45,
-  bgLightGray: 46,
-  bgWhite: 47,
-  FireflyDarkBlue: 40,
-  Orange: 41,
-  MarbleBlue: 42,
-  GreyishTurquoise: 43,
-  Gray: 44,
-  Indigo: 45,
-  LightGray: 46,
-  White: 47,
+  bgDarkBlue: 40, // FireflyDarkBlue: 40,
+  bgOrange: 41, // Orange: 41,
+  bgBlue: 42, // MarbleBlue: 42,
+  bgTurquoise: 43, // GreyishTurquoise: 43,
+  bgGray: 44, // Gray: 44,
+  bgIndigo: 45, // Indigo: 45,
+  bgLightGray: 46, // LightGray: 46,
+  bgWhite: 47, // White: 47,
 }

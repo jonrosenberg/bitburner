@@ -41,6 +41,7 @@ async function doPurchase(ns, player, purchased, desired_power) {
 /** @param {NS} ns */
 function sellServer(ns, weakestServer) {
 	ns.tprint("Deleting server ", weakestServer.id, " of power ", weakestServer.power)
+    ns.killall(weakestServer.id);
 	return ns.deleteServer(weakestServer.id)
 }
 /** @param {NS} ns */

@@ -2,6 +2,7 @@
 import HackableBaseServer from "./if.server.hackable"
 import BasePlayer from "./if.player";
 import { dpList } from "./lib.utils"
+import { fmt, ansi, msToTime, bin } from "./var.constants";
 
 /** @param {NS} ns **/
 export async function main(ns) {
@@ -36,7 +37,7 @@ export async function main(ns) {
   targets.push(new HackableBaseServer(ns, "iron-gym"));
 	ns.disableLog("ALL");
 	for (let server of servers) {
-		ns.scp(["bin.wk.js", "bin.hk.js", "bin.gr.js"], server.id, "home");
+		ns.scp([bin.wk.id, bin.hk.id, bin.gr.id], server.id, "home");
 	}
 
 	while(true) {
@@ -45,27 +46,27 @@ export async function main(ns) {
         if (server.admin && target.admin) {
           // divert all of this server's available threads to the most valuable command
           if (target.security.level > target.security.min) {
-            let available_threads = Math.ceil(server.threadCount(1.8)/targets.length)
+            let available_threads = Math.ceil(server.threadCount(bin.wk.ram)/targets.length)
             // weaken the target while security > minsecurity
             if (available_threads >= 1) {
               // ns.print(`${server.id} server.wk: ${available_threads}`)
-              ns.exec("bin.wk.js", server.id, available_threads, target.id)
+              ns.exec(bin.wk.id, server.id, available_threads, target.id)
             }
           } else if (target.money.available < target.money.max) {
-            let available_threads = Math.ceil(server.threadCount(1.8)/targets.length)
+            let available_threads = Math.ceil(server.threadCount(bin.gr.ram)/targets.length)
 
             // grow the target while money < maxmoney
             if (available_threads >= 1) {
               // ns.print(`${server.id} server.gr: ${available_threads}`)
-              ns.exec("bin.gr.js", server.id, available_threads, target.id)
+              ns.exec(bin.gr.id, server.id, available_threads, target.id)
             }
           } else {
-            let available_threads = Math.ceil(server.threadCount(1.75)/targets.length)
+            let available_threads = Math.ceil(server.threadCount(bin.hk.ram)/targets.length)
 
             // hack the target
             if (available_threads >= 1) {
               // ns.print(`${server.id} server.hk: ${available_threads}`)
-              ns.exec("bin.hk.js", server.id, available_threads, target.id)
+              ns.exec(bin.hk.id, server.id, available_threads, target.id)
             } 
           }
 
