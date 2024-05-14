@@ -1,7 +1,16 @@
 import HackableBaseServer from "./if.server.hackable";
 import { hack_percent, ServerBaseGrowthRate, ServerMaxGrowthRate, BitNodeMultipliers} from "./var.constants";
 
-/** @param {NS} ns */
+/** 
+ * returns the number of threads 
+ * @param {Server} server
+ * @param {number} targertMondey 
+ * @param {number} startMoney 
+ * @param {number} hackMult 
+ * @param {number=} cores (default = 1)
+ * @param {NS=} ns (default = null)
+ $ @return {number}
+ */
 export function numCycleForGrowthCorrected(server, targetMoney, startMoney, hackMult, cores = 1, ns=null) {
   if (startMoney < 0) { startMoney = 0; } // servers "can't" have less than 0 dollars on them
 	if (targetMoney > server.moneyMax) { targetMoney = server.moneyMax; } // can't grow a server to more than its moneyMax

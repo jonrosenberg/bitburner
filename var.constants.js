@@ -1,16 +1,17 @@
 /** @param {NS} ns */
-export const reservedHomeRam = 50;
-export const hack_percent = 1;
+export const reservedHomeRam = 200;
+export const hack_percent = .1;
 export const ServerBaseGrowthRate =  1.03;
 export const ServerMaxGrowthRate = 1.0035;
 export const BitNodeMultipliers = {
 	ServerGrowthRate: 1
 };
 // hwgw
-export const hwgw_amp = {
-  targets: 1,// required ready targets needed for batch
+export const hcns = {
+  targets: .5,// required ready targets needed for batch
   time: 100, // wait time divided by this number
-  num_simultaneous_batches: 4,
+  num_simultaneous_batches: 8,
+  batch_lag: 160,
 };
 
 /**
@@ -39,6 +40,7 @@ export const bin = {
   },
 }
 
+
 /**
  * Convert miliseconds into time string format
  * @param {number} miliseconds 
@@ -48,7 +50,7 @@ export const msToTime = (s) => {
   // Pad to 2 or 3 digits, default is 2
   var pad = (n, z = 2) => ('00' + n).slice(-z);
   const t = [s/3.6e6|0, (s%3.6e6)/6e4|0, (s%6e4)/1000|0, s%1000] 
-  return (t[0] >= 100 ? t[0] + 'h ' : t[0] ? pad(t[0]) + 'h ':'') + (t[1] ? pad(t[1]) + 'm ':'') + (t[2] ? t[2] + 's ':'') + (s%1000 != 0 ? pad(t[3], 3) + 'ms':'0ms');
+  return (t[0] >= 100 ? t[0] + 'h ' : t[0] ? pad(t[0]) + 'h ':'') + (t[1] ? pad(t[1]) + 'm ':'') + (t[2] ? t[2] + 's ':'') + (s%1000 != 0 ? pad(t[3], 3) + 'ms':'0');
 }
 
 

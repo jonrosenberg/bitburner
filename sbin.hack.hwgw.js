@@ -3,7 +3,7 @@ import HackableBaseServer from "./if.server.hackable"
 
 import { numCycleForGrowthCorrected } from "./if.server.hwgw"
 import { dpList } from "./lib.utils";
-import { hwgw_amp, fmt, ansi, msToTime, bin } from "./var.constants";
+import { hcns, fmt, ansi, msToTime, bin } from "./var.constants";
 
 const argsSchema = [
   ['sanity', false],
@@ -16,6 +16,7 @@ let options;
 export async function main(ns) {
     options = ns.flags(argsSchema);
     ns.disableLog("getHackingLevel");
+    ns.disableLog("exec");
     // gather servers stage
     let servers = dpList(ns).map(s => new HWGWBaseServer(ns, s))
     servers.forEach(s => ns.scp([bin.wk.id, bin.hk.id, bin.gr.id], s.id, "home"));
@@ -32,13 +33,16 @@ export async function main(ns) {
         }
       }    
       let targets = servers.filter(s => s.isTarget);
+      // let home = [new HWGWBaseServer(ns, 'home')];
+      // let attackers = home.filter(s => s.isAttacker);
       let attackers = servers.filter(s => s.isAttacker);
-      ns.print(`targets ${targets.length}`)
-      ns.print(`attackers ${attackers.length}`)
+      // ns.print(`targets ${targets.length}`)
+      // ns.print(`attackers ${attackers.length}`)
       attackers.forEach(a => available_ram.set(a.id, a.ram.free))
   
       // sort stage
       attackers.sort((a,b) => a.isHome - b.isHome)
+      // sort targets val descending aka from highest val=($ per Thread/Sec) to lowest
       targets.sort((a,b) => b.hwgw_value - a.hwgw_value)
       
       // prep stage
@@ -47,7 +51,7 @@ export async function main(ns) {
       // ensure the minimum required ready targets
       let required_ready_targets = targets.reduce(function(acc, target) {
         let batch_ram = target.perfect_batch.hk * bin.hk.ram + target.perfect_batch.gr * bin.gr.ram + target.perfect_batch.wk1 * bin.wk.ram + target.perfect_batch.wk2 * bin.wk.ram;
-        let simultaneous_batches = (ns.getHackTime(target.id) * hwgw_amp.num_simultaneous_batches) / 160;
+        let simultaneous_batches = (ns.getHackTime(target.id) * hcns.num_simultaneous_batches) / hcns.batch_lag;
         let ram_required = batch_ram * simultaneous_batches;
 
         if (ram_required <= acc[acc.length-1]) {
@@ -59,7 +63,7 @@ export async function main(ns) {
 
       // let required_ready_targets = 11;
       ns.print(`ready_targets.length >= required_ready_targets: ${ready_targets.length} >= ${required_ready_targets}`)
-      if (ready_targets.length >= required_ready_targets*hwgw_amp.targets) {
+      if (ready_targets.length >= required_ready_targets*hcns.targets) {
         // hwgw stage
         for (let target of ready_targets) {
           let proposed_batch = calculate_hwgw_batch(ns, target);
@@ -80,16 +84,15 @@ export async function main(ns) {
             // prepTimes.push(Math.ceil(proposed_batch.landing.wk2 - performance.now()))
             prepTimes.push(Math.ceil(proposed_batch.landing.wk2))
           }
-          await ns.sleep(160);
+          await ns.sleep(hcns.batch_lag);
         }
         ns.print(`!options.noPrep: ${!options.noPrep} prepTimes: ${prepTimes.length}`)
-        await ns.sleep(1000)
         if (prepTimes.length > 0 && !options.noPrep) {
           prepTimes.sort((a,b) => b-a);
           let maxPrepTime = prepTimes[0];
           prepTimes.sort((a,b) => a-b);
           let minPrepTime = prepTimes[0];
-          let prepTime = (maxPrepTime + (minPrepTime*(hwgw_amp.time-1)))/hwgw_amp.time;
+          let prepTime = (maxPrepTime + (minPrepTime*(hcns.time-1)))/hcns.time;
           const rounds = Math.floor(prepTime/(bin.sh.runtime+20));
           if(rounds > 0 && options.share) { ns.run("sbin.repShareBoost.js",1, "--rounds", rounds)}
           ns.print(`${ansi([fmt.bgTurquoise,fmt.Blue])}Sleep: ${msToTime(prepTime)}${ansi()}${options.share ? ansi([fmt.bgTurquoise,fmt.Green])+' Share:'+rounds+ansi():''} max: ${msToTime(maxPrepTime)} min: ${msToTime(minPrepTime)}`);
@@ -97,7 +100,7 @@ export async function main(ns) {
         }
       }
 
-      await ns.sleep(160)
+      await ns.sleep(hcns.batch_lag)
     }
 }
 
@@ -110,6 +113,16 @@ function reduce_proposed_batch(proposed_batch, property, threads) {
   proposed_batch.threads[property] -= threads
   return proposed_batch
 }
+/**
+ * get runtime for hk,wk,gr files in milliseconds or str format
+ */
+const execRuntime = (targetHackTime) => {
+  let results = {};
+  Object.entries(bin).forEach((v) => { results[v[1].id] = v[1].id != 'sh' ? {
+        ms:(targetHackTime * v[1].runtimeMult), str:msToTime(targetHackTime * v[1].runtimeMult) 
+      } : { ms:(v[1].runtime), str:msToTime(v[1].runtime) }});
+  return results
+}
 
 /**
  * Calculates required threads and timings for an hwgw batch.
@@ -121,7 +134,7 @@ function reduce_proposed_batch(proposed_batch, property, threads) {
 /** @param {NS} ns **/
 function calculate_hwgw_batch(ns, target, prep_batch=false) {
   const home = new HackableBaseServer(ns, "home")
-  const batch_lag = 160;
+  const batch_lag = hcns.batch_lag*10;
     
   const hackThreads = (prep_batch) ? 0 : target.perfect_batch.hk;
   const weakThreads1 = target.perfect_batch.wk1 + ((target.security.level - target.security.min) * 20);
@@ -132,17 +145,17 @@ function calculate_hwgw_batch(ns, target, prep_batch=false) {
     ns.getHackingMultipliers(), 
     home.cores,
     ns);
+  // ns.print(`${ansi([fmt.Bold,fmt.bgGray,fmt.Yellow])}${growThreads}=${ns.formulas.hacking.growThreads(ns.getServer(target.id),ns.getPlayer(),target.money.max,home.cores)}`)
   growThreads += (prep_batch) ? 0 : target.perfect_batch.gr
     
     
-  const weakThreads2 = target.perfect_batch.wk2
-
+  const weakThreads2 = target.perfect_batch.wk2  
   const hackTime = (hackThreads) ? ns.getHackTime(target.id) : 0;
-  const growTime = (growThreads) ? ns.getHackTime(target.id) * bin.gr.runtimeMult : 0;
-  const weakenTime = (weakThreads1 || weakThreads2) ? ns.getHackTime(target.id) * bin.wk.runtimeMult : 0;
+  const growTime = (growThreads) ? ns.getHackTime(target.id) * bin.gr.runtimeMult : 0;// ns.getGrowTime(target.id) : 0;
+  const weakenTime = (weakThreads1 || weakThreads2) ? ns.getHackTime(target.id) * bin.wk.runtimeMult : 0;//ns.getWeakenTime(target.id) : 0;
   const currentTime = 0; //performance.now();
-  const next_landing = Math.max(hackTime, growTime, weakenTime) + currentTime + batch_lag - ns.getHackTime(target.id);
-
+  const next_landing = Math.max(hackTime, growTime, weakenTime) + currentTime + batch_lag; //- ns.getHackTime(target.id);
+  ns.print(`${ansi([1,32,43])} landing:${msToTime(next_landing)}\n hk:${msToTime(hackTime)}\n gr:${msToTime(growTime)}\n wk:${msToTime(weakenTime)}`)
   return {
     threads: {
       hk: hackThreads,
@@ -151,10 +164,10 @@ function calculate_hwgw_batch(ns, target, prep_batch=false) {
       wk2: weakThreads2
     },
     landing: {
-      hk: Math.floor(next_landing),
-      wk1: Math.floor(next_landing + (batch_lag * .25)),
-      gr: Math.floor(next_landing + (batch_lag * .5)),
-      wk2: Math.floor(next_landing + (batch_lag * .75))
+      hk: Math.floor(next_landing - hackTime),
+      wk1: Math.floor(next_landing + (batch_lag * .25) - weakenTime),
+      gr: Math.floor(next_landing + (batch_lag * .5) - growTime),
+      wk2: Math.floor(next_landing + (batch_lag * .75) - weakenTime)
     },
     filename: {
       hk: bin.hk.id,
@@ -201,7 +214,7 @@ function run_hwgw_batch(ns, attackers, target, batch, available_ram) {
                     filename: batch.filename.gr,
                     threads: alloc,
                     landing: batch.landing.gr,
-                    id: 'grH'
+                    id: 'grh'
                 })
                 ram_map = reduce_available_ram(ram_map, a, alloc, batch.ram.gr)
                 batch = reduce_proposed_batch(batch, "gr", alloc)
@@ -276,14 +289,26 @@ function run_hwgw_batch(ns, attackers, target, batch, available_ram) {
     ns.print(`${!options.sanity && (!wkSanityCheck || !hkSanityCheck || !grSanityCheck) ? ansi([fmt.Red]) : ansi()}Sanity wk: ${wkScheduled.reduce((a,b) => a + b.threads, 0)}=${(weakThreads1 + weakThreads2)} hk: ${hkScheduled.reduce((a,b) => a + b.threads, 0)}=${hackThreads} gr: ${grScheduled.reduce((a,b) => a + b.threads, 0)}=${growThreads}`);
     // make sure our batch matches the threads requested initially
     // exec and return modified ram
-    if (options.sanity || (wkSanityCheck && hkSanityCheck && grSanityCheck) ) { 
-        for (let cmd of nextBatch) {
-            ns.exec(cmd.filename, cmd.attacker, cmd.threads, target.id, false, cmd.landing)
-        }
-        ns.print(`${ansi([fmt.Bold,fmt.Underline,fmt.bgLightGray,fmt.Cyan])}${nextBatch.length} -> ${target.id} `)
-        for (let cmd of nextBatch) {
-          ns.print(`${ansi([fmt.Bold,fmt.bgGray,fmt.Yellow])} ${cmd.id} ${msToTime(cmd.landing)} ${cmd.attacker}:${cmd.threads}`)
-        }
-        return ram_map
+    if (options.sanity || (wkSanityCheck && hkSanityCheck && grSanityCheck) ) {
+      
+      let bt = execRuntime(ns.getHackTime(target.id));
+      // bt = {}
+      // const hkt = ns.getHackTime(target.id);
+      // const grt = ns.getGrowTime(target.id);
+      // const wkt = ns.getWeakenTime(target.id);
+      // bt[bin.hk.id]= {ms:hkt, str:msToTime(hkt)};
+      // bt[bin.gr.id]= {ms:grt, str:msToTime(grt)};        
+      // bt[bin.wk.id]= {ms:wkt, str:msToTime(wkt)};
+      
+      for (let cmd of nextBatch) {
+        ns.exec(cmd.filename, cmd.attacker, cmd.threads, target.id, false, cmd.landing, `${msToTime(bt[cmd.filename].ms+cmd.landing)} T:${bt[cmd.filename].str.slice(0, -6)} + LND:${msToTime(cmd.landing)}`)
+      }
+      ns.print(`${ansi([fmt.Bold,fmt.Underline,fmt.bgLightGray,fmt.Cyan])}${nextBatch.length} -> ${target.id} `);
+      
+      for (let cmd of nextBatch) {
+        ns.print(`${ansi([fmt.Bold,fmt.bgGray,fmt.Yellow])} ${cmd.id} ${msToTime(bt[cmd.filename].ms+cmd.landing)} ${cmd.attacker}:${cmd.threads}${ansi()} landing: ${msToTime(cmd.landing)} `)
+      }
+      return ram_map
+        
     }
 }

@@ -65,11 +65,10 @@ export async function main(ns) {
     }
 
     // Log opponent's next move, once it happens
-    // await ns.go.opponentNextTurn();
+    // result = await ns.go.opponentNextTurn(true);
     ns.print("ns.go.getOpponent()")
     ns.print(ns.go.getOpponent())
-    
-    await ns.sleep(200);
+    await ns.sleep(100);
     if (result?.type !== "gameOver") {
       ns.print("next move");
     } else {

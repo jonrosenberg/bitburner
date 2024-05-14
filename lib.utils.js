@@ -1,8 +1,11 @@
 
 /**
  * returns an array of servers dynamically
- */
-/** @param {NS} ns */
+ * @param {NS} ns 
+ * @param {string=} current 
+ * @param {set=} current 
+ * @return {string[]}
+ **/
 export function dpList(ns, current="home", set=new Set()) {
 	let connections = ns.scan(current)
 	let next = connections.filter(c => !set.has(c))
@@ -14,13 +17,15 @@ export function dpList(ns, current="home", set=new Set()) {
 }
 /**
  * returns an active Threads
- */
-/** @param {NS} ns */
+ * @param {NS} ns 
+ * @return {number[]} 
+ **/
 export function runningThreads(ns, current="home") {
   let runWkThreads = 0;
   let runGrThreads = 0;
   let runHkThreads = 0;
   for (let pi of ns.ps("home")) {
+    
     switch(pi.filename) {
       case "bin.wk.js":
         runWkThreads += pi.threads;
@@ -36,6 +41,19 @@ export function runningThreads(ns, current="home") {
   }
   return [runWkThreads, runGrThreads, runHkThreads]
 }
+/**
+ * get runtime for hk, wk, gr, sh files in milliseconds or str format
+ * @param {number} serverHackTime - ns.getHackTime(serverName)
+ * @return {Object.<string, number|string>} json of ms and str
+ */
+export const execRuntime = (serverHackTime) => {
+  let results = {};
+  Object.entries(bin).forEach((v) => { results[v[1].id] = v[1].id != 'sh' ? {
+        ms:(serverHackTime * v[1].runtimeMult), str:msToTime(serverHackTime * v[1].runtimeMult) 
+      } : { ms:(v[1].runtime), str:msToTime(v[1].runtime) }});
+  return results
+}
+
 
 export class Cacheable {
 	constructor(){}
