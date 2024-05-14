@@ -10,7 +10,7 @@ export const BitNodeMultipliers = {
 export const hcns = {
   targets: .5,// required ready targets needed for batch
   time: 100, // wait time divided by this number
-  num_simultaneous_batches: 8,
+  num_simultaneous_batches: 16,
   batch_lag: 160,
 };
 

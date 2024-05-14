@@ -46,13 +46,23 @@ Note that the [0][0] point is shown on the bottom-left on the visual board (as i
     this.opponent
     this.boardState
   }
-
   /**
    * Finds all groups of connected pieces, or empty space groups
-   * @return {Object[][]} pointState
+   * @return {Object[][]} {all:chains[][],player[chains],oppenent[chains]}
    */
-  get chains() { return this.ns.go.analysis.getChains() }
-  get chainsStr() { return this.rotateArray90(this.chains, false).join("\n") }
+  get chains() {
+    const chains = this.ns.go.analysis.getChains();
+    return {
+      all: chains,
+      player: this.getUniqueValues(this.getPositions('X',this.boardState),chains),
+      oppenent: this.getUniqueValues(this.getPositions('O',this.boardState),chains),
+    }
+  }
+  get chainsStr() { return this.rotateArray90(this.chains.all, false).join("\n") }
+
+  /**
+   * Go/effects/netscriptGoImplementation.ts/getControlledEmptyNodes() <- bitburner-src/src/Go/boardAnalysis/boardAnalysis.ts/getControlledSpace(board) <- getAllPotentialEyes(board, chains, GoColor.white, length * 2)
+   */
   get controlledEmptyNodes() { return this.ns.go.analysis.getControlledEmptyNodes() }
   get controlledEmptyNodesStr() { return this.rotateArray90(this.controlledEmptyNodes, false).join("\n") }
   get liberties() { return this.ns.go.analysis.getLiberties() }
@@ -68,7 +78,7 @@ Note that the [0][0] point is shown on the bottom-left on the visual board (as i
     };
   }
 
-  rotateArray90(arr, clockwise = false) {
+  rotateArray90(arr, clockwise = false, ns = null) {
     // Get the dimensions of the input array
     const rows = arr.length, cols = arr[0].length;
     // padding
@@ -76,12 +86,37 @@ Note that the [0][0] point is shown on the bottom-left on the visual board (as i
     // Rotate the elements and convert each row array back to a string
     return Array.from({ length: cols }, (_, j) =>
       Array.from({ length: rows }, (_, i) => {
-        let char = pad(clockwise ? arr[rows - 1 - i][j] : arr[i][cols - 1 - j]);
-        return char !== null ? char : '#';
+        let char = clockwise ? arr[rows - 1 - i][j] : arr[i][cols - 1 - j];
+        return char !== null ? pad(char) : ' #';
       }).join(' ')
     );
   }
-  
+
+  // Function to get the positions of key='X'
+  getPositions(key, board) {
+    const positions = [];
+    for (let row = 0; row < board.length; row++) {
+      for (let col = 0; col < board[row].length; col++) {
+        if (board[row][col] === key) {
+          positions.push([row, col]);
+        }
+      }
+    }
+    return positions;
+  }
+
+  // Function to get unique values at specific positions
+  getUniqueValues(positions, valuesBoard) {
+    const valueSet = new Set();
+    positions.forEach(([row, col]) => {
+      const value = valuesBoard[row][col];
+      if (value !== null) {
+        valueSet.add(value);
+      }
+    });
+    return Array.from(valueSet);
+  }
+
 
 
 }

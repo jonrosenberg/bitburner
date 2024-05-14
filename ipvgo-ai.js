@@ -5,14 +5,18 @@ import BaseIPvGo from "./if.ipvgo";
 export async function main(ns) {
   ns.tail()
   let go = new BaseIPvGo(ns);
-  //  = getMoveOptions();
+  //  = getMoveOptions(); 
   ns.print("go.boardStateStr")
+  ns.print(go.boardState.all)
   ns.print(go.boardStateStr)
   ns.print("go.controlledEmptyNodesStr")
+  ns.print(go.controlledEmptyNodes)
   ns.print(go.controlledEmptyNodesStr)
   ns.print("go.chainsStr")
+  ns.print(go.chains)
   ns.print(go.chainsStr)
   ns.print("go.libertiesStr")
+  ns.print(go.liberties)
   ns.print(go.libertiesStr)
   // ns.print(Object.getOwnPropertyNames(ns.go.analysis))
   // ns.print(ns.go.analysis)

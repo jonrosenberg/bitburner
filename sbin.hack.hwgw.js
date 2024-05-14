@@ -18,7 +18,7 @@ export async function main(ns) {
     ns.disableLog("getHackingLevel");
     ns.disableLog("exec");
     // gather servers stage
-    let servers = dpList(ns).map(s => new HWGWBaseServer(ns, s))
+    let servers = dpList(ns).map(s => new HWGWBaseServer(ns, s));
     servers.forEach(s => ns.scp([bin.wk.id, bin.hk.id, bin.gr.id], s.id, "home"));
     let available_ram = new Map();
     ns.tail();
@@ -291,24 +291,24 @@ function run_hwgw_batch(ns, attackers, target, batch, available_ram) {
     // exec and return modified ram
     if (options.sanity || (wkSanityCheck && hkSanityCheck && grSanityCheck) ) {
       
-      let bt = execRuntime(ns.getHackTime(target.id));
-      // bt = {}
-      // const hkt = ns.getHackTime(target.id);
-      // const grt = ns.getGrowTime(target.id);
-      // const wkt = ns.getWeakenTime(target.id);
-      // bt[bin.hk.id]= {ms:hkt, str:msToTime(hkt)};
-      // bt[bin.gr.id]= {ms:grt, str:msToTime(grt)};        
-      // bt[bin.wk.id]= {ms:wkt, str:msToTime(wkt)};
-      
-      for (let cmd of nextBatch) {
-        ns.exec(cmd.filename, cmd.attacker, cmd.threads, target.id, false, cmd.landing, `${msToTime(bt[cmd.filename].ms+cmd.landing)} T:${bt[cmd.filename].str.slice(0, -6)} + LND:${msToTime(cmd.landing)}`)
-      }
-      ns.print(`${ansi([fmt.Bold,fmt.Underline,fmt.bgLightGray,fmt.Cyan])}${nextBatch.length} -> ${target.id} `);
-      
-      for (let cmd of nextBatch) {
-        ns.print(`${ansi([fmt.Bold,fmt.bgGray,fmt.Yellow])} ${cmd.id} ${msToTime(bt[cmd.filename].ms+cmd.landing)} ${cmd.attacker}:${cmd.threads}${ansi()} landing: ${msToTime(cmd.landing)} `)
-      }
-      return ram_map
+        let bt = execRuntime(ns.getHackTime(target.id));
+        // bt = {}
+        // const hkt = ns.getHackTime(target.id);
+        // const grt = ns.getGrowTime(target.id);
+        // const wkt = ns.getWeakenTime(target.id);
+        // bt[bin.hk.id]= {ms:hkt, str:msToTime(hkt)};
+        // bt[bin.gr.id]= {ms:grt, str:msToTime(grt)};        
+        // bt[bin.wk.id]= {ms:wkt, str:msToTime(wkt)};
+        
+        for (let cmd of nextBatch) {
+            ns.exec(cmd.filename, cmd.attacker, cmd.threads, target.id, false, cmd.landing, `${msToTime(bt[cmd.filename].ms+cmd.landing)} T:${bt[cmd.filename].str.slice(0, -6)} + LND:${msToTime(cmd.landing)}`)
+        }
+        ns.print(`${ansi([fmt.Bold,fmt.Underline,fmt.bgLightGray,fmt.Cyan])}${nextBatch.length} -> ${target.id} `);
+        
+        for (let cmd of nextBatch) {
+          ns.print(`${ansi([fmt.Bold,fmt.bgGray,fmt.Yellow])} ${cmd.id} ${msToTime(bt[cmd.filename].ms+cmd.landing)} ${cmd.attacker}:${cmd.threads}${ansi()} landing: ${msToTime(cmd.landing)} `)
+        }
+        return ram_map
         
     }
 }
