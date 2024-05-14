@@ -40,7 +40,6 @@ export const bin = {
   },
 }
 
-
 /**
  * Convert miliseconds into time string format
  * @param {number} miliseconds 
