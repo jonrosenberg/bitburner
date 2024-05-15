@@ -1,6 +1,4 @@
 
-
-
 export default class BaseIPvGo {
   /** @param {NS} ns **/
   constructor(ns, hostname) {
@@ -40,12 +38,7 @@ Note that the [0][0] point is shown on the bottom-left on the visual board (as i
 
 @remarks — RAM cost: 4 GB */
   get boardState() { return this.ns.go.getBoardState() }
-  get boardStateStr() { return this.rotateArray90(this.boardState, false).join("\n") }
-  get disputedTerritory() {
-    this.validMoves
-    this.opponent
-    this.boardState
-  }
+
   /**
    * Finds all groups of connected pieces, or empty space groups
    * @return {Object[][]} {all:chains[][],player[chains],oppenent[chains]}
@@ -54,44 +47,67 @@ Note that the [0][0] point is shown on the bottom-left on the visual board (as i
     const chains = this.ns.go.analysis.getChains();
     return {
       all: chains,
-      player: this.getUniqueValues(this.getPositions('X',this.boardState),chains),
-      oppenent: this.getUniqueValues(this.getPositions('O',this.boardState),chains),
+      player: this.getUniqueValues(this.getPositions('X', this.boardState), chains),
+      oppenent: this.getUniqueValues(this.getPositions('O', this.boardState), chains),
     }
   }
-  get chainsStr() { return this.rotateArray90(this.chains.all, false).join("\n") }
 
   /**
    * Go/effects/netscriptGoImplementation.ts/getControlledEmptyNodes() <- bitburner-src/src/Go/boardAnalysis/boardAnalysis.ts/getControlledSpace(board) <- getAllPotentialEyes(board, chains, GoColor.white, length * 2)
    */
   get controlledEmptyNodes() { return this.ns.go.analysis.getControlledEmptyNodes() }
-  get controlledEmptyNodesStr() { return this.rotateArray90(this.controlledEmptyNodes, false).join("\n") }
   get liberties() { return this.ns.go.analysis.getLiberties() }
-  get libertiesStr() { return this.rotateArray90(this.liberties, false).join("\n") }
+  get boardPoints() {
+    const points = []
+    return Array.from({ length: this.boardState.length }, (_, row) => Array.from({ length: this.boardState[0].length }, (_, col) => this.point(row, col)));
+  }
   isValidMove(x, y) { return this.validMoves[x][y] }
 
-  neighbors(board, x, y) {
+  move(point, oldLibertyCount = null, newLibertyCount = null, createsLife = false) {
     return {
-      north: board[x]?.[y + 1],
-      east: board[x + 1]?.[y],
-      south: board[x]?.[y - 1],
-      west: board[x - 1]?.[y],
+      point: PointState,
+      oldLibertyCount: oldLibertyCount,
+      newLibertyCount: newLibertyCount,
+      createsLife: createsLife,
+    }
+  }
+  toPoints(posArr) {
+    return Array.from(posArr, (pos) => this.point(pos[0], pos[1]))
+  }
+  pieceColor(piece) {
+    switch (piece) {
+      case 'X':
+        'Black';
+        break;
+      case 'O':
+        'White';
+        break;
+      case '#':
+        null;
+        break;
+      case '.':
+        'Empty';
+    }
+  }
+  point(x, y) {
+    return {
+      piece: this.boardState[x][y],
+      color: this.pieceColor(this.boardState[x][y]),
+      chain: this.chains.all[x][y],
+      liberty: this.liberties[x][y],
+      validMove: this.validMoves[x][y],
+      x: x,
+      y: y,
+    }
+  }
+  neighbors(x, y, board = null) {
+    return {
+      north: board ? board[x]?.[y + 1] : this.boardPoints[x]?.[y + 1],
+      east: board ? board[x + 1]?.[y] : this.boardPoints[x + 1]?.[y],
+      south: board ? board[x]?.[y - 1] : this.boardPoints[x]?.[y - 1],
+      west: board ? board[x - 1]?.[y] : this.boardPoints[x - 1]?.[y],
     };
   }
-
-  rotateArray90(arr, clockwise = false, ns = null) {
-    // Get the dimensions of the input array
-    const rows = arr.length, cols = arr[0].length;
-    // padding
-    var pad = (n, z = 2) => ('  ' + n).slice(-z);
-    // Rotate the elements and convert each row array back to a string
-    return Array.from({ length: cols }, (_, j) =>
-      Array.from({ length: rows }, (_, i) => {
-        let char = clockwise ? arr[rows - 1 - i][j] : arr[i][cols - 1 - j];
-        return char !== null ? pad(char) : ' #';
-      }).join(' ')
-    );
-  }
-
   // Function to get the positions of key='X'
   getPositions(key, board) {
     const positions = [];
@@ -104,17 +120,59 @@ Note that the [0][0] point is shown on the bottom-left on the visual board (as i
     }
     return positions;
   }
-
   // Function to get unique values at specific positions
   getUniqueValues(positions, valuesBoard) {
     const valueSet = new Set();
     positions.forEach(([row, col]) => {
-      const value = valuesBoard[row][col];
-      if (value !== null) {
-        valueSet.add(value);
-      }
+      if (valuesBoard[row][col] !== null) valueSet.add(valuesBoard[row][col]);
+      // const value = valuesBoard[row][col];
+      // if (value !== null) {
+      //   valueSet.add(value);
+      // }
     });
     return Array.from(valueSet);
+  }
+  /**
+   * Finds all the pieces in the current continuous group, or 'chain'
+   *
+   * Iteratively traverse the adjacent pieces of the same color to find all the pieces in the same chain,
+   * which are the pieces connected directly via a path consisting only of only up/down/left/right
+   */
+  findAdjacentPointsInChain(x, y) {
+    const point = this.point(x, y);
+    if (!point) {
+      return []
+    }
+    const checkedPoints = []
+    const adjacentPoints = [point]
+    const pointsToCheckNeighbors = [point]
+
+    while (pointsToCheckNeighbors.length) {
+      const currentPoint = pointsToCheckNeighbors.pop()
+      if (!currentPoint) {
+        break
+      }
+
+      checkedPoints.push(currentPoint)
+      const neighbors = this.neighbors(currentPoint.x, currentPoint.y)
+
+        ;[neighbors.north, neighbors.east, neighbors.south, neighbors.west]
+          .filter(isNotNull)
+          .filter(isDefined)
+          .forEach(neighbor => {
+            if (
+              neighbor &&
+              neighbor.color === currentPoint.color &&
+              !contains(checkedPoints, neighbor)
+            ) {
+              adjacentPoints.push(neighbor)
+              pointsToCheckNeighbors.push(neighbor)
+            }
+            checkedPoints.push(neighbor)
+          })
+    }
+
+    return adjacentPoints
   }
 
 

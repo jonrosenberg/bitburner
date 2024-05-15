@@ -1,11 +1,12 @@
-import BaseIPvGo from "./if.ipvgo";
+import BoardIPvGo from "./if.ipvgo.board";
 
 /** @param {NS} ns
  */
 export async function main(ns) {
   ns.tail()
-  let go = new BaseIPvGo(ns);
-  //  = getMoveOptions(); 
+  let go = new BoardIPvGo(ns);
+  //  = getMoveOptions();
+  
   ns.print("go.boardStateStr")
   ns.print(go.boardState.all)
   ns.print(go.boardStateStr)
@@ -18,23 +19,10 @@ export async function main(ns) {
   ns.print("go.libertiesStr")
   ns.print(go.liberties)
   ns.print(go.libertiesStr)
-  // ns.print(Object.getOwnPropertyNames(ns.go.analysis))
-  // ns.print(ns.go.analysis)
-  //ns.print(Object.getOwnPropertyNames(ns))
-  //ns.print(ns)
-  let input = ''
-  let conInput = true;
-  let count = 0;
-  //ns.print(LocationName)
-  // while (count < 100)  {
-  //   const input = await ns.prompt("what to print next?",{type:"text"});
-  //   ns.print(input);
-  //   ns.print(ns)
-  //   if(input == "q") { break; }
-  //   ++count;
-  // } 
+  const x = 0, y = 0;
+  ns.print("go.findAdjacentPointsInChain(1,1)")
+  ns.print(go.findAdjacentPointsInChain(1,1))
   
-
   // ns.print(go.neighbors(go.boardState,1,1))
   return null;
   

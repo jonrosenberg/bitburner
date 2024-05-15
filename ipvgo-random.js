@@ -5,7 +5,8 @@ const argsSchema = [
   ['h',false],
   ['r',true]
 ];
-
+const maxGameTime = 5*60;
+const getTimeSeconds = () => Math.round(performance.now()/1000);
 const opponentsNames = ["Netburners", "Slum Snakes", "The Black Hand", "Tetrads", "Daedalus", "Illuminati", "????????????"];
 const practiceName = "No Ai"
 
@@ -44,7 +45,8 @@ export async function main(ns) {
   let opponent = options.o;
 
   let result, x, y;
-  
+  let numGames=0;
+  let gametime = getTimeSeconds();
   while (true) {
     const board = ns.go.getBoardState();
     const validMoves = ns.go.analysis.getValidMoves();
@@ -69,13 +71,17 @@ export async function main(ns) {
     ns.print("ns.go.getOpponent()")
     ns.print(ns.go.getOpponent())
     await ns.sleep(100);
-    if (result?.type !== "gameOver") {
+    ns.print(`INFO game #${numGames} time ${getTimeSeconds()-gametime} seconds < ${maxGameTime} seconds `)
+    if ( result?.type !== "gameOver" && maxGameTime > (getTimeSeconds()-gametime) ) {
       ns.print("next move");
     } else {
       if (options.r) { 
         opponent = (opponent+1)%opponentsNames.length;
       }
       ns.go.resetBoardState(opponentsNames[opponent],boardSize[options.s])
+      ++numGames;
+      gametime = getTimeSeconds();
+      
     }
     
   }
