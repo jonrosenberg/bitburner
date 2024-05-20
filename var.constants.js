@@ -1,5 +1,5 @@
 /** @param {NS} ns */
-export const reservedHomeRam = 200;
+export const reservedHomeRam = 12;
 export const hack_percent = .1;
 export const ServerBaseGrowthRate =  1.03;
 export const ServerMaxGrowthRate = 1.0035;
@@ -9,8 +9,8 @@ export const BitNodeMultipliers = {
 // hwgw
 export const hcns = {
   targets: .5,// required ready targets needed for batch
-  time: 100, // wait time divided by this number
-  num_simultaneous_batches: 16,
+  time: 10, // wait time divided by this number
+  num_simultaneous_batches: 4,
   batch_lag: 160,
 };
 
@@ -39,6 +39,7 @@ export const bin = {
     runtime: 10000,
   },
 }
+
 
 /**
  * Convert miliseconds into time string format

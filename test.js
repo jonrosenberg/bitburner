@@ -13,7 +13,13 @@ const execRuntime = (targetHackTime, toStr=false) => {
 /** @param {NS} ns */
 export async function main(ns) {
   ns.tail()
-  
+  ns.clearLog()
+  document.getElementById('unclickable').parentNode.addEventListener('click', () => {
+    document.getElementById('unclickable').style = "display: none; visibility: hidden;";
+  }, true);
+  //let doc = eval("ns.bypass(document);");
+
+  //ns.bypass(document)
   ns.print(`${ansi([fmt.Bold,fmt.Underline,fmt.Cyan,fmt.bgTurquoise])}Karma: ${ns.heart.break()}`);
   //ns.print("servers: \u001b[1;40;4;32m; bye \u001b[31m hi red \u001b[0m back to normal");
   ns.print(`${ansi([fmt.Bold,fmt.Underline,fmt.Cyan,fmt.bgTurquoise])}ANSI function${ansi()} back to nromal`)

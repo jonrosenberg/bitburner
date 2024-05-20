@@ -2,11 +2,15 @@ import json
 import base64
 import pdb
 import os
+import copy
 
 PATH = "game_saves/"
 FILE = PATH+"bitburnerSave_1715960762_BN1x3.json"
 OUT_FILE_DECODED = PATH+"bitburn-decoded.json"
 OUT_FILE = PATH+"bitburn-out.json"
+
+
+NEW_AUGMENTATIONS = [{'level': 1, 'name': 'Synaptic Enhancement Implant'}]
 
 def getMostRecentFile():
     global OUT_FILE_DECODED
@@ -45,9 +49,34 @@ def main() -> None:
     # Alter the save file here:
     
     player_save = json.loads(payload["data"]["PlayerSave"])
+    print("decoded save file")
+    
+    # # modify neuruflux governor
+    neuroflux = [ a for a in player_save['data']['augmentations'] if a['name'] == 'NeuroFlux Governor'] 
+    neuroflux = neuroflux[0] if len(neuroflux) > 0 else {'level': 1, 'name': 'NeuroFlux Governor'}
+    neuroflux['level'] += 1
+    for i in range(20):
+        neuroflux['level'] += 1 
+        if neuroflux not in player_save['data']['queuedAugmentations']:
+            player_save['data']['queuedAugmentations'].append(copy.copy(neuroflux))
 
-    player_save["data"]["exploits"].append("EditSaveFile")
-    # player_save["data"]["augmentations"].append({"level":1,"name":"BigD's Big ... Brain"})
+    # add exploits to saveFile
+    if "EditSaveFile" not in player_save["data"]["exploits"]:
+        player_save["data"]["exploits"].append("EditSaveFile")
+
+    # Add a new augmentation to saveFile
+    player_save["data"]["augmentations"].append({"level":1,"name":"BigD's Big ... Brain"})
+    # player_save["data"]["augmentations"].append({'level': 23, 'name': 'NeuroFlux Governor'})
+
+    # Move queuedAugmentations into augmentations on saveFile
+    queuedAugmentations = [ a for a in player_save['data']['queuedAugmentations'] if a['name'] != 'NeuroFlux Governor']
+    player_save['data']['augmentations'].extend(queuedAugmentations)
+    player_save['data']['queuedAugmentations'] = [ a for a in player_save['data']['queuedAugmentations'] if a['name'] == 'NeuroFlux Governor']
+    
+    unique_list = []
+    [unique_list.append(x) for x in player_save["data"]["augmentations"] if x not in unique_list]
+    player_save["data"]["augmentations"] = unique_list
+
     payload["data"]["PlayerSave"] = json.dumps(player_save)
     data = json.dumps(payload)
     
